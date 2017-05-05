@@ -33,4 +33,5 @@ install:
 script:
     - ./configure && make && make check
 
+after_failure: find /usr -name check.pc -print -exec cat {} \; && cat config.log
 
