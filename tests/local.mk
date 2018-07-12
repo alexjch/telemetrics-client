@@ -13,6 +13,7 @@ TESTS = $(check_PROGRAMS) $(dist_check_SCRIPTS)
 check_PROGRAMS = \
 	%D%/check_config \
 	%D%/check_daemon \
+	%D%/check_postd \
 	%D%/check_probes \
 	%D%/check_ncb64  \
 	%D%/check_journal \
@@ -53,6 +54,34 @@ if HAVE_SYSTEMD_JOURNAL
 %C%_check_daemon_CFLAGS += \
         $(SYSTEMD_JOURNAL_CFLAGS)
 %C%_check_daemon_LDADD += \
+        $(SYSTEMD_JOURNAL_LIBS)
+endif
+endif
+
+%C%_check_postd_SOURCES = \
+        %D%/check_postd.c \
+	src/spool.c \
+	src/iorecord.c \
+	src/retention.c \
+        src/telempostdaemon.c \
+        src/telempostdaemon.h \
+        src/journal/journal.c \
+        src/journal/journal.h
+
+%C%_check_postd_CFLAGS = \
+        $(AM_CFLAGS) \
+        @CHECK_CFLAGS@ \
+        @CURL_CFLAGS@
+%C%_check_postd_LDADD = \
+        @CHECK_LIBS@ \
+        @CURL_LIBS@ \
+        $(top_builddir)/src/libtelem-shared.la
+
+if LOG_SYSTEMD
+if HAVE_SYSTEMD_JOURNAL
+%C%_check_postd_CFLAGS += \
+        $(SYSTEMD_JOURNAL_CFLAGS)
+%C%_check_postd_LDADD += \
         $(SYSTEMD_JOURNAL_LIBS)
 endif
 endif

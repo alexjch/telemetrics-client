@@ -1,4 +1,6 @@
-bin_PROGRAMS = %D%/telemd
+bin_PROGRAMS = \
+	%D%/telemd \
+	%D%/telempostd
 
 %C%_telemd_SOURCES = \
 	%D%/main.c \
@@ -23,17 +25,57 @@ bin_PROGRAMS = %D%/telemd
 
 if HAVE_SYSTEMD_DAEMON
 %C%_telemd_CFLAGS += \
-        $(SYSTEMD_DAEMON_CFLAGS)
+	$(SYSTEMD_DAEMON_CFLAGS)
 %C%_telemd_LDADD += \
-        $(SYSTEMD_DAEMON_LIBS)
+	$(SYSTEMD_DAEMON_LIBS)
 endif
 
 if LOG_SYSTEMD
 if HAVE_SYSTEMD_JOURNAL
 %C%_telemd_CFLAGS += \
-        $(SYSTEMD_JOURNAL_CFLAGS)
+	$(SYSTEMD_JOURNAL_CFLAGS)
 %C%_telemd_LDADD += \
-        $(SYSTEMD_JOURNAL_LIBS)
+	$(SYSTEMD_JOURNAL_LIBS)
+endif
+endif
+
+# Telemetry post daemon
+%C%_telempostd_SOURCES = \
+	%D%/post.c \
+	%D%/configuration.c \
+	%D%/telempostdaemon.c \
+	%D%/telempostdaemon.h \
+	%D%/journal/journal.c \
+	%D%/journal/journal.h \
+	%D%/spool.h \
+	%D%/spool.c \
+	%D%/retention.c \
+	%D%/iorecord.c \
+	%D%/iorecord.h
+
+%C%_telempostd_LDADD = $(CURL_LIBS) \
+	%D%/libtelem-shared.la
+
+%C%_telempostd_CFLAGS = \
+	$(AM_CFLAGS)
+
+%C%_telempostd_LDFLAGS = \
+	$(AM_LDFLAGS) \
+	-pie
+
+if HAVE_SYSTEMD_DAEMON
+%C%_telempostd_CFLAGS += \
+	$(SYSTEMD_DAEMON_CFLAGS)
+%C%_telempostd_LDADD += \
+	$(SYSTEMD_DAEMON_LIBS)
+endif
+
+if LOG_SYSTEMD
+if HAVE_SYSTEMD_JOURNAL
+%C%_telempostd_CFLAGS += \
+	$(SYSTEMD_JOURNAL_CFLAGS)
+%C%_telempostd_LDADD += \
+	$(SYSTEMD_JOURNAL_LIBS)
 endif
 endif
 
