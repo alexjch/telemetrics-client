@@ -37,6 +37,8 @@ dist_check_SCRIPTS = \
 	%D%/check_daemon.c \
 	src/telemdaemon.c \
 	src/telemdaemon.h \
+	src/iorecord.h \
+	src/iorecord.c \
 	src/journal/journal.c \
 	src/journal/journal.h
 

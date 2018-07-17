@@ -14,6 +14,8 @@
  * details.
  */
 
+#include <stdbool.h>
+
 /* TODO: change this folder to a one owned by telemetry:telemetry */
 static const char DEFAULT_STAGE_DIR[] = "/var/tmp/telemetry";
 
@@ -25,7 +27,7 @@ static const char DEFAULT_STAGE_DIR[] = "/var/tmp/telemetry";
  * @param body record message content
  *
  */
-void save_record(char *path, char *headers[], char *body);
+void stage_record(char *path, char *headers[], char *body);
 
 /**
  * Reads a telemetry record

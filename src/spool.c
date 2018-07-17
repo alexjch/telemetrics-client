@@ -27,7 +27,7 @@
 #include <errno.h>
 
 #include "spool.h"
-#include "telemdaemon.h"
+#include "telempostdaemon.h"
 #include "log.h"
 #include "configuration.h"
 #include "util.h"
@@ -254,7 +254,7 @@ void transmit_spooled_record(char *record_path, bool *post_succeeded, long size)
                 goto read_error;
         }
 
-        *post_succeeded = post_record_http(headers, payload, false);
+        *post_succeeded = post_record_http(headers, payload);
         if (*post_succeeded) {
                 unlink(record_path);
         }

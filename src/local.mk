@@ -6,12 +6,9 @@ bin_PROGRAMS = \
 	%D%/main.c \
 	%D%/telemdaemon.c \
 	%D%/telemdaemon.h \
-	%D%/spool.c \
-	%D%/spool.h \
+	%D%/iorecord.c \
 	%D%/journal/journal.c \
-	%D%/journal/journal.h \
-	%D%/retention.c \
-	%D%/retention.h
+	%D%/journal/journal.h
 
 %C%_telemd_LDADD = $(CURL_LIBS) \
 	%D%/libtelem-shared.la
@@ -49,6 +46,7 @@ endif
 	%D%/journal/journal.h \
 	%D%/spool.h \
 	%D%/spool.c \
+	%D%/retention.h \
 	%D%/retention.c \
 	%D%/iorecord.c \
 	%D%/iorecord.h

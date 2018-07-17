@@ -96,6 +96,13 @@ bool process_staged_record(char *filename, TelemPostDaemon *daemon);
  */
 void staging_records_loop(TelemPostDaemon *daemon);
 
+/**
+ *
+ *
+ *
+ */
+bool post_record_http(char *headers[], char *body);
+
 
 static inline bool inside_direct_spool_window(TelemPostDaemon *daemon, time_t current_time)
 {
