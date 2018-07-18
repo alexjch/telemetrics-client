@@ -16,7 +16,6 @@
 
 #include <stdbool.h>
 
-/* TODO: change this folder to a one owned by telemetry:telemetry */
 static const char DEFAULT_STAGE_DIR[] = "/var/tmp/telemetry";
 
 /**

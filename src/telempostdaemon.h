@@ -97,28 +97,32 @@ bool process_staged_record(char *filename, TelemPostDaemon *daemon);
 void staging_records_loop(TelemPostDaemon *daemon);
 
 /**
+ * Posts a record to backend
  *
- *
- *
+ * @param headers a pointer to an array with keys and values
+ * @param body a pointer to the payload
  */
 bool post_record_http(char *headers[], char *body);
 
-
+/* spool window check */
 static inline bool inside_direct_spool_window(TelemPostDaemon *daemon, time_t current_time)
 {
         return (current_time < daemon->bypass_http_post_ts + 1800) ? true : false;
 }
 
+/* set http bypass */
 static inline void start_network_bypass(TelemPostDaemon *daemon)
 {
         daemon->bypass_http_post_ts = time(NULL);
 }
 
+/* burst limit check  */
 static inline bool burst_limit_enabled(int64_t burst_limit)
 {
         return (burst_limit > -1) ? true : false;
 }
 
+/* rate limit check */
 static inline bool rate_limit_check(int current_minute, int64_t burst_limit, int
                                     window_length, size_t *array, size_t incValue)
 {
@@ -149,12 +153,14 @@ static inline bool rate_limit_check(int current_minute, int64_t burst_limit, int
         return (count > burst_limit) ? false : true;
 }
 
+/* spool strategy check */
 static inline bool spool_strategy_selected(TelemPostDaemon *daemon)
 {
         /* Performs action depending on strategy choosen */
         return (strcmp(daemon->rate_limit_strategy, "spool") == 0) ? true : false;
 }
 
+/* rate limit check  */
 static inline void rate_limit_update(int current_minute, int window_length, size_t *array,
                                      size_t incValue)
 {

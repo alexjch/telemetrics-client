@@ -26,7 +26,6 @@
 #include "common.h"
 
 TelemPostDaemon tdaemon;
-static bool post_was_called = false;
 
 char *get_serialized_record(char *headers, char *post_body, size_t *record_size)
 {
@@ -54,14 +53,6 @@ char *get_serialized_record(char *headers, char *post_body, size_t *record_size)
         return data;
 }
 
-bool dummy_post(char *headers[], char *body, bool spool)
-{
-        post_was_called = true;
-        return post_was_called;
-}
-
-bool (*post_record_ptr)(char *[], char *, bool) = dummy_post;
-
 void setup(void)
 {
         char *config_file = ABSTOPSRCDIR "/src/data/example.conf";
@@ -83,16 +74,51 @@ START_TEST(check_daemon_is_initialized)
 }
 END_TEST
 
+START_TEST(check_handle_client_with_no_data)
+{
+        setup();
+
+        bool success;
+        char *filename = ABSTOPSRCDIR "/tests/telempostd/empty_message";
+
+        success = process_staged_record(filename, &tdaemon);
+        ck_assert(success == false);
+}
+END_TEST
+
+START_TEST(check_handle_client_with_incorrect_data)
+{
+        setup();
+
+        bool success;
+        char *filename = ABSTOPSRCDIR "/tests/telempostd/incorrect_message";
+
+        success = process_staged_record(filename, &tdaemon);
+        ck_assert(success == false);
+}
+END_TEST
+
+START_TEST(check_process_record_with_correct_size_and_data)
+{
+        setup();
+
+        bool success;
+        char *filename = ABSTOPSRCDIR "/tests/telempostd/correct_message";
+
+        success = process_staged_record(filename, &tdaemon);
+        ck_assert(success == true);
+}
+END_TEST
 
 START_TEST(check_process_record_with_incorrect_headers)
 {
         setup();
 
-        bool processed;
+        bool success;
         char *filename = ABSTOPSRCDIR "/tests/telempostd/incorrect_headers";
 
-        processed = process_staged_record(filename, &tdaemon);
-        ck_assert(!processed);
+        success = process_staged_record(filename, &tdaemon);
+        ck_assert(success == false);
 }
 END_TEST
 
@@ -387,6 +413,9 @@ Suite *config_suite(void)
         // Individual unit tests are added to "test cases"
         TCase *t = tcase_create("daemon");
         tcase_add_test(t, check_daemon_is_initialized);
+        tcase_add_test(t, check_handle_client_with_no_data);
+        tcase_add_test(t, check_handle_client_with_incorrect_data);
+        tcase_add_test(t, check_process_record_with_correct_size_and_data);
         tcase_add_test(t, check_process_record_with_incorrect_headers);
         tcase_add_test(t, check_rate_limit_enabled_functions);
         tcase_add_test(t, check_rate_limit_records_that_pass);

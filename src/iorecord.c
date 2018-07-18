@@ -93,7 +93,7 @@ bool read_record(char *fullpath, char *headers[], char **body)
 
         ret = stat(fullpath, &buf);
         if (ret == -1) {
-                telem_perror("Unable to stat record in spool");
+                telem_log(LOG_ERR, "Unable to stat record %s in staging\n", fullpath);
                 return false;
         }
         size = buf.st_size;
@@ -107,7 +107,7 @@ bool read_record(char *fullpath, char *headers[], char **body)
         for (i = 0; i < NUM_HEADERS; i++) {
                 const char *header_name = get_header_name(i);
                 if (!fgets(line, LINE_MAX, fp)) {
-                        telem_log(LOG_ERR, "Error while parsing staged record\n");
+                        telem_log(LOG_ERR, "Error while parsing staged record, header: [%d]\n", i);
                         fclose(fp);
                         return false;
                 }   

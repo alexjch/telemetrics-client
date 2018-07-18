@@ -26,7 +26,6 @@
 #include "common.h"
 
 TelemDaemon tdaemon;
-static bool post_was_called = false;
 
 char *get_serialized_record(char *headers, char *post_body, size_t *record_size)
 {
@@ -53,14 +52,6 @@ char *get_serialized_record(char *headers, char *post_body, size_t *record_size)
         memcpy(data + offset, post_body, payloadsize + 1);
         return data;
 }
-
-bool dummy_post(char *headers[], char *body, bool spool)
-{
-        post_was_called = true;
-        return post_was_called;
-}
-
-bool (*post_record_ptr)(char *[], char *, bool) = dummy_post;
 
 void setup(void)
 {
@@ -160,6 +151,190 @@ void set_up_socket_pair(int *client, int *server)
         *server = sv[1];
 }
 
+START_TEST(check_handle_client_with_no_data)
+{
+        setup();
+
+        client *cl;
+
+        int server_fd;
+        int client_fd;
+        bool processed;
+
+        set_up_socket_pair(&client_fd, &server_fd);
+        cl = add_client(&(tdaemon.client_head), client_fd);
+        ck_assert_msg(cl != NULL, "failed to malloc client");
+        add_pollfd(&tdaemon, client_fd, POLLIN | POLLPRI);
+
+        processed = handle_client(&tdaemon, 0, cl);
+        ck_assert(processed == false);
+        ck_assert_msg(is_client_list_empty(&(tdaemon.client_head)), "Failed to remove client with no data\n");
+        ck_assert_msg(tdaemon.nfds == 0, "Failed to remove poll fd for client with n data\n");
+        close(server_fd);
+}
+END_TEST
+
+START_TEST(check_handle_client_with_incorrect_data)
+{
+        setup();
+
+        client *cl;
+        char *buf = "test";
+        int server_fd;
+        int client_fd;
+        bool processed;
+
+        set_up_socket_pair(&client_fd, &server_fd);
+        cl = add_client(&(tdaemon.client_head), client_fd);
+        ck_assert_msg(cl != NULL, "failed to malloc client");
+        add_pollfd(&tdaemon, client_fd, POLLIN | POLLPRI);
+
+        ssize_t ret = write(server_fd, buf, 2);
+        ck_assert(ret == 2);
+
+        processed = handle_client(&tdaemon, 0, cl);
+        ck_assert(processed == false);
+        ck_assert_msg(is_client_list_empty(&(tdaemon.client_head)), "Failed to remove client with no data\n");
+        ck_assert_msg(tdaemon.nfds == 0, "Failed to remove poll fd for client with n data\n");
+        close(server_fd);
+}
+END_TEST
+
+START_TEST(check_handle_client_with_incorrect_size)
+{
+        setup();
+
+        client *cl;
+        int server_fd;
+        int client_fd;
+        bool processed;
+        char *data = "test";
+        char buf[4096];
+
+        set_up_socket_pair(&client_fd, &server_fd);
+        cl = add_client(&(tdaemon.client_head), client_fd);
+        ck_assert_msg(cl != NULL, "failed to malloc client");
+        add_pollfd(&tdaemon, client_fd, POLLIN | POLLPRI);
+
+        int size = 10;
+        memset(buf, 0, 4096);
+        memcpy(buf, &size, RECORD_SIZE_LEN);
+        memcpy(buf + RECORD_SIZE_LEN, data, sizeof(uint32_t));
+        ssize_t ret = write(server_fd, buf, 2);
+        ck_assert(ret == 2);
+
+        processed = handle_client(&tdaemon, 0, cl);
+        ck_assert(processed == false);
+        ck_assert_msg(is_client_list_empty(&(tdaemon.client_head)), "Failed to remove client with no data\n");
+        ck_assert_msg(tdaemon.nfds == 0, "Failed to remove poll fd for client with n data\n");
+        close(server_fd);
+}
+END_TEST
+
+START_TEST(check_handle_client_with_correct_size)
+{
+        setup();
+
+        client *cl;
+        int server_fd;
+        int client_fd;
+        bool processed;
+        char *data = "testing hello world message for handle client check";
+        char buf[256];
+
+        set_up_socket_pair(&client_fd, &server_fd);
+        cl = add_client(&(tdaemon.client_head), client_fd);
+        ck_assert_msg(cl != NULL, "failed to malloc client");
+        add_pollfd(&tdaemon, client_fd, POLLIN | POLLPRI);
+
+        size_t size = strlen(data);
+        memset(buf, 0, 256);
+        memcpy(buf, &size, RECORD_SIZE_LEN);
+        memcpy(buf + RECORD_SIZE_LEN, &size, sizeof(uint32_t));
+        memcpy(buf + 2 * sizeof(uint32_t), data, strlen(data) + 1);
+        ck_assert(strcmp(data, buf + 2 * sizeof(int32_t)) == 0);
+
+        ssize_t ret = write(server_fd, buf, 2 * sizeof(uint32_t) + size + 1);
+        ck_assert(ret != -1);
+        processed = handle_client(&tdaemon, 0, cl);
+        ck_assert(processed == true);
+
+        ck_assert_msg(is_client_list_empty(&(tdaemon.client_head)), "Failed to remove client with no data\n");
+        ck_assert_msg(tdaemon.nfds == 0, "Failed to remove poll fd for client with n data\n");
+        close(server_fd);
+}
+END_TEST
+
+START_TEST(check_process_record_with_correct_size_and_data)
+{
+        setup();
+
+        client *cl;
+        int server_fd, client_fd;
+        bool processed;
+        char *record;
+        size_t record_size;
+        char *headers = "record_format_version: 1\nclassification: crash/kernel/bug\nseverity: 0\n"
+                        "machine_id: 1234\ncreation_timestamp: 1418672344\narch:x86_64\n"
+                        "host_type: macbookpro\nbuild: 200\nkernel_version: 3.15\n"
+                        "payload_format_version: 1\n"
+                        "system_name: clear-linux-os\n"
+                        "board_name: Qemu|Intel\n"
+                        "cpu_model: Intel(R) Core(TM) i7-5650U CPU @ 2.20GHz\n"
+                        "bios_version: Qemu\n"
+                        "event_id: 3a2d799826edc6266d72824d2aac6763\n";
+        char *post_body = "test message";
+
+        set_up_socket_pair(&client_fd, &server_fd);
+        cl = add_client(&(tdaemon.client_head), client_fd);
+        ck_assert_msg(cl != NULL, "failed to malloc client");
+        add_pollfd(&tdaemon, client_fd, POLLIN | POLLPRI);
+
+        record = get_serialized_record(headers, post_body, &record_size);
+        ssize_t ret = write(server_fd, record, record_size);
+        ck_assert(ret == record_size);
+
+        processed = handle_client(&tdaemon, 0, cl);
+        ck_assert(processed == true);
+        ck_assert_msg(is_client_list_empty(&(tdaemon.client_head)), "Failed to remove client with correct data\n");
+        ck_assert_msg(tdaemon.nfds == 0, "Failed to remove poll fd for client with correct data\n");
+        close(server_fd);
+        free(record);
+}
+END_TEST
+
+START_TEST(check_process_record_with_incorrect_headers)
+{
+        setup();
+
+        client *cl;
+        int server_fd, client_fd;
+        bool processed;
+        char *record;
+        size_t record_size;
+        char *headers = "record_format_version: 1\nclassificatioooon: crash/kernel/bug\nseverity: 0\n"
+                        "machine_id: 1234\ncreation_timestamp: 1418672344\narch:x86_64\n"
+                        "host_type: macbookpro\nbuild: 200\nkernel_version: 3.15\n";
+        char *post_body = "test message";
+
+        set_up_socket_pair(&client_fd, &server_fd);
+        cl = add_client(&(tdaemon.client_head), client_fd);
+        ck_assert_msg(cl != NULL, "failed to malloc client");
+        add_pollfd(&tdaemon, client_fd, POLLIN | POLLPRI);
+
+        record = get_serialized_record(headers, post_body, &record_size);
+        ssize_t ret = write(server_fd, record, record_size);
+        ck_assert(ret == record_size);
+
+        processed = handle_client(&tdaemon, 0, cl);
+        ck_assert(processed == true);
+        ck_assert_msg(is_client_list_empty(&(tdaemon.client_head)), "Failed to remove client with incorrect headers\n");
+        ck_assert_msg(tdaemon.nfds == 0, "Failed to remove poll fd for client with incorrect headers\n");
+        close(server_fd);
+        free(record);
+}
+END_TEST
+
 Suite *config_suite(void)
 {
         // A suite is comprised of test cases, defined below
@@ -170,6 +345,12 @@ Suite *config_suite(void)
         tcase_add_test(t, check_add_del_poll_fd);
         tcase_add_test(t, check_daemon_is_initialized);
         tcase_add_test(t, check_add_remove_client);
+        tcase_add_test(t, check_handle_client_with_no_data);
+        tcase_add_test(t, check_handle_client_with_incorrect_data);
+        tcase_add_test(t, check_handle_client_with_incorrect_size);
+        tcase_add_test(t, check_handle_client_with_correct_size);
+        tcase_add_test(t, check_process_record_with_correct_size_and_data);
+        tcase_add_test(t, check_process_record_with_incorrect_headers);
 
         suite_add_tcase(s, t);
 

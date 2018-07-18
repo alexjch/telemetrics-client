@@ -70,6 +70,12 @@ endif
         src/journal/journal.c \
         src/journal/journal.h
 
+EXTRA_DIST += \
+	%D%/telempostd/correct_message \
+	%D%/telempostd/incorrect_headers \
+	%D%/telempostd/empty_message \
+	%D%/telempostd/incorrect_message
+
 %C%_check_postd_CFLAGS = \
         $(AM_CFLAGS) \
         @CHECK_CFLAGS@ \

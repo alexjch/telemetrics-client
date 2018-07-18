@@ -290,7 +290,7 @@ void process_record(TelemDaemon *daemon, client *cl)
         if (ret == -1) {
                 telem_log(LOG_ERR, "Failed to allocate memory for record name in staging folder, aborting\n");
                 exit(EXIT_FAILURE);
-        } 
+        }
 
         stage_record(recordpath, headers, body);
 

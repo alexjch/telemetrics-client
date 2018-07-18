@@ -86,7 +86,7 @@ static void initialize_signals(TelemPostDaemon *daemon)
         set_pollfd(daemon, sigfd, signlfd, POLLIN);
 }
 
-void initialize_rate_limit(TelemPostDaemon *daemon)
+static void initialize_rate_limit(TelemPostDaemon *daemon)
 {
         for (int i = 0; i < TM_RATE_LIMIT_SLOTS; i++) {
                 daemon->record_burst_array[i] = 0;
@@ -100,7 +100,7 @@ void initialize_rate_limit(TelemPostDaemon *daemon)
         daemon->rate_limit_strategy = rate_limit_strategy_config();
 }
 
-void initialize_record_delivery(TelemPostDaemon *daemon)
+static void initialize_record_delivery(TelemPostDaemon *daemon)
 {
         daemon->record_retention_enabled = record_retention_enabled_config();
         daemon->record_server_delivery_enabled = record_server_delivery_enabled_config();
@@ -114,7 +114,7 @@ void initialize_daemon(TelemPostDaemon *daemon)
         daemon->is_spool_valid = is_spool_valid();
         daemon->record_journal = open_journal(JOURNAL_PATH);
         /* Register record retention delete action as a callback to prune entry */
-        if (daemon->record_journal != NULL) {
+        if (daemon->record_journal != NULL && daemon->record_retention_enabled) {
                 daemon->record_journal->prune_entry_callback = &delete_record_by_id;
         }
         daemon->fd = inotify_init();
@@ -229,7 +229,7 @@ bool post_record_http(char *headers[], char *body)
         return res ? false : true;
 }
 
-void save_local_copy(TelemPostDaemon *daemon, char *body)
+static void save_local_copy(TelemPostDaemon *daemon, char *body)
 {
         int ret = 0;
         char *tmpbuf = NULL;
@@ -262,7 +262,7 @@ save_err:
         return;
 }
 
-void spool_record(TelemPostDaemon *daemon, char *headers[], char *body)
+static void spool_record(TelemPostDaemon *daemon, char *headers[], char *body)
 {
         int ret = 0;
         struct stat stat_buf;
@@ -333,7 +333,7 @@ spool_err:
         return;
 }
 
-void save_entry_to_journal(TelemPostDaemon *daemon, time_t t_stamp, char *headers[])
+static void save_entry_to_journal(TelemPostDaemon *daemon, time_t t_stamp, char *headers[])
 {
         char *classification_value;
         char *event_id_value;
@@ -372,13 +372,9 @@ bool process_staged_record(char *filename, TelemPostDaemon *daemon)
 
         /* Load file */
         if ((ret = read_record(filename, headers, &body)) == false) {
+                telem_log(LOG_WARNING, "unable to read record\n");
                 goto end_processing_file;
         }
-
-        /* Apply policies
-         * 1- Record retention
-         * 2- Spool policies
-         **/
 
         /** Record retention **/
         // Save record in journal
@@ -470,7 +466,7 @@ end_processing_file:
         return ret;
 }
 
-int directory_dot_filter(const struct dirent *entry)
+static int directory_dot_filter(const struct dirent *entry)
 {
         if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0)) {
                 return 0;
@@ -575,13 +571,7 @@ void run_daemon(TelemPostDaemon *daemon)
                                                                 telem_log(LOG_ERR, "Failed to allocate memory for record full path, aborting\n");
                                                                 exit(EXIT_FAILURE);
                                                         }
-                                                        /* TODO: here apply policies and post content
-                                                                 1- read record
-                                                         * create files (c and h) to handle writing reading record
-                                                                 2- process record
-                                                         * move post to telem post daemon
-                                                         * move spool to telem post daemon
-                                                         * */
+                                                        /* Process inotify event */
                                                         if (process_staged_record(record_name, daemon)) {
                                                                 unlink(record_name);
                                                         }
@@ -597,7 +587,6 @@ void run_daemon(TelemPostDaemon *daemon)
                 /* Check spool  */
                 time_t now = time(NULL);
                 if (difftime(now, last_spool_run_time) >= spool_process_time) {
-                        /* TODO: THIS is using http defined in telemdaemon.c  */
                         spool_records_loop(&(daemon->current_spool_size));
                         last_spool_run_time = time(NULL);
                 }

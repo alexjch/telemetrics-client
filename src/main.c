@@ -77,7 +77,6 @@ int main(int argc, char **argv)
         int c;
         char *config_file = NULL;
         int opt_index = 0;
-        nfds_t initial_nfds = 0;
         sigset_t mask;
         //bool interrupted = false;
 
@@ -233,9 +232,6 @@ int main(int argc, char **argv)
         daemon.machine_id_override = read_machine_id_override();
 
         time_t last_refresh_time = time(NULL);
-
-        /* Save initial count for non connection fds */
-        initial_nfds = daemon.nfds;
 
         /* Loop to accept clients */
         while (1) {
