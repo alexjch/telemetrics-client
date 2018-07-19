@@ -21,7 +21,8 @@ EXTRA_DIST += \
 	%D%/klogscanner.service.in \
 	%D%/pstore-clean.service.in \
 	%D%/libtelemetry.pc.in \
-	%D%/telemd.path.in \
+	%D%/telempostd.service.in \
+	%D%/telempostd.path.in \
 	%D%/telemd.service.in \
 	%D%/telemd.socket.in \
 	%D%/telemd-update-trigger.service.in \
@@ -59,7 +60,8 @@ systemdunit_DATA = \
 	%D%/telemd.service \
 	%D%/telemd.socket \
 	%D%/telemd-update-trigger.service \
-	%D%/telemd.path
+	%D%/telempostd.service \
+	%D%/telempostd.path
 
 %D%/hprobe.service: %D%/hprobe.service.in
 	$(pathfix) < $< > $@
@@ -82,13 +84,16 @@ systemdunit_DATA = \
 %D%/pstore-clean.service: %D%/pstore-clean.service.in
 	$(pathfix) < $< > $@
 
+%D%/telempostd.path: %D%/telempostd.path.in
+	$(pathfix) < $< > $@
+
+%D%/telempostd.service: %D%/telempostd.service.in
+	$(pathfix) < $< > $@
+
 %D%/telemd.service: %D%/telemd.service.in
 	$(pathfix) < $< > $@
 
 %D%/telemd.socket: %D%/telemd.socket.in
-	$(pathfix) < $< > $@
-
-%D%/telemd.path: %D%/telemd.path.in
 	$(pathfix) < $< > $@
 
 %D%/telemd-update-trigger.service: %D%/telemd-update-trigger.service.in
@@ -106,7 +111,8 @@ systemconf_DATA = %D%/40-core-ulimit.conf
 clean-local:
 	-rm -f  %D%/telemd.service \
 		%D%/telemd.socket \
-		%D%/telemd.path \
+		%D%/telempostd.service \
+		%D%/telempostd.path \
 		%D%/telemd-update-trigger.service \
 		%D%/telemetrics.conf \
 		%D%/telemetrics-dirs.conf \

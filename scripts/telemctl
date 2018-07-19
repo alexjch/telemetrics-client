@@ -3,7 +3,7 @@
 declare -a SPECIAL_UNITS=(
   hprobe.timer
   telemd.socket
-  telemd.path
+  telempostd.path
 )
 
 declare -a SERVICES=(
@@ -13,6 +13,7 @@ declare -a SERVICES=(
   pstore-probe.service
   klogscanner.service
   telemd.service
+  telempostd.service
 )
 
 SCRIPT="$0"
@@ -69,7 +70,8 @@ telem_start() {
 
 telem_is_active() {
   # check only activation units
-  systemctl is-active telemd.socket
+  echo "telemd     :" $(systemctl is-active telemd.socket)
+  echo "telempostd :"  $(systemctl is-active telempostd.path)
 }
 
 telem_opt_out() {
