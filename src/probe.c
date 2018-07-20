@@ -50,13 +50,6 @@
 #include "telemdaemon.h"
 #include "configuration.h"
 
-/*
- *  Using a function pointer for unit testing to isolate the call to actual post function.
- *  The call to post the record to the server is stubbed out in the unit tests
- *  using pointer to a fake function.
- */
-//bool (*post_record_ptr)(char *[], char *, bool) = post_record_http;
-
 void print_usage(char *prog)
 {
         printf("%s: Usage\n", prog);
