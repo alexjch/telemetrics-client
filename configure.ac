@@ -8,7 +8,7 @@ AM_INIT_AUTOMAKE([1.14 -Wall -Werror -Wno-extra-portability foreign subdir-objec
 AM_SILENT_RULES([yes])
 LT_INIT([disable-static])
 AC_CONFIG_MACRO_DIRS([build-aux/m4])
-AC_CONFIG_SRCDIR([src/main.c])
+AC_CONFIG_SRCDIR([src/probe.c])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.

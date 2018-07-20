@@ -1,37 +1,37 @@
 bin_PROGRAMS = \
-	%D%/telemd \
+	%D%/telemprobd \
 	%D%/telempostd
 
-%C%_telemd_SOURCES = \
-	%D%/main.c \
+%C%_telemprobd_SOURCES = \
+	%D%/probe.c \
 	%D%/telemdaemon.c \
 	%D%/telemdaemon.h \
 	%D%/iorecord.c \
 	%D%/journal/journal.c \
 	%D%/journal/journal.h
 
-%C%_telemd_LDADD = $(CURL_LIBS) \
+%C%_telemprobd_LDADD = $(CURL_LIBS) \
 	%D%/libtelem-shared.la
 
-%C%_telemd_CFLAGS = \
+%C%_telemprobd_CFLAGS = \
 	$(AM_CFLAGS)
 
-%C%_telemd_LDFLAGS = \
+%C%_telemprobd_LDFLAGS = \
 	$(AM_LDFLAGS) \
 	-pie
 
 if HAVE_SYSTEMD_DAEMON
-%C%_telemd_CFLAGS += \
+%C%_telemprobd_CFLAGS += \
 	$(SYSTEMD_DAEMON_CFLAGS)
-%C%_telemd_LDADD += \
+%C%_telemprobd_LDADD += \
 	$(SYSTEMD_DAEMON_LIBS)
 endif
 
 if LOG_SYSTEMD
 if HAVE_SYSTEMD_JOURNAL
-%C%_telemd_CFLAGS += \
+%C%_telemprobd_CFLAGS += \
 	$(SYSTEMD_JOURNAL_CFLAGS)
-%C%_telemd_LDADD += \
+%C%_telemprobd_LDADD += \
 	$(SYSTEMD_JOURNAL_LIBS)
 endif
 endif

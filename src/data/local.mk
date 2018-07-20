@@ -23,9 +23,9 @@ EXTRA_DIST += \
 	%D%/libtelemetry.pc.in \
 	%D%/telempostd.service.in \
 	%D%/telempostd.path.in \
-	%D%/telemd.service.in \
-	%D%/telemd.socket.in \
-	%D%/telemd-update-trigger.service.in \
+	%D%/telemprobd.service.in \
+	%D%/telemprobd.socket.in \
+	%D%/telemprobd-update-trigger.service.in \
 	%D%/telemetrics-dirs.conf.in \
 	%D%/telemetrics.conf.in
 
@@ -57,9 +57,9 @@ systemdunit_DATA = \
 	%D%/pstore-probe.service \
 	%D%/klogscanner.service \
 	%D%/pstore-clean.service \
-	%D%/telemd.service \
-	%D%/telemd.socket \
-	%D%/telemd-update-trigger.service \
+	%D%/telemprobd.service \
+	%D%/telemprobd.socket \
+	%D%/telemprobd-update-trigger.service \
 	%D%/telempostd.service \
 	%D%/telempostd.path
 
@@ -90,13 +90,13 @@ systemdunit_DATA = \
 %D%/telempostd.service: %D%/telempostd.service.in
 	$(pathfix) < $< > $@
 
-%D%/telemd.service: %D%/telemd.service.in
+%D%/telemprobd.service: %D%/telemprobd.service.in
 	$(pathfix) < $< > $@
 
-%D%/telemd.socket: %D%/telemd.socket.in
+%D%/telemprobd.socket: %D%/telemprobd.socket.in
 	$(pathfix) < $< > $@
 
-%D%/telemd-update-trigger.service: %D%/telemd-update-trigger.service.in
+%D%/telemprobd-update-trigger.service: %D%/telemprobd-update-trigger.service.in
 	$(pathfix) < $< > $@
 
 sysctldir = @SYSTEMD_SYSCTLDIR@
@@ -109,11 +109,11 @@ systemconfdir = @SYSTEMD_SYSTEMCONFDIR@
 systemconf_DATA = %D%/40-core-ulimit.conf
 
 clean-local:
-	-rm -f  %D%/telemd.service \
-		%D%/telemd.socket \
+	-rm -f  %D%/telemprobd.service \
+		%D%/telemprobd.socket \
 		%D%/telempostd.service \
 		%D%/telempostd.path \
-		%D%/telemd-update-trigger.service \
+		%D%/telemprobd-update-trigger.service \
 		%D%/telemetrics.conf \
 		%D%/telemetrics-dirs.conf \
 		%D%/libtelemetry.pc \
