@@ -53,6 +53,13 @@ char *get_serialized_record(char *headers, char *post_body, size_t *record_size)
         return data;
 }
 
+bool dummy_post(char *headers[], char *body)
+{
+        return true;
+}
+
+bool (*post_record_ptr)(char *headers[], char *body) = dummy_post;
+
 void setup(void)
 {
         char *config_file = ABSTOPSRCDIR "/src/data/example.conf";

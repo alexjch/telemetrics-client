@@ -104,6 +104,15 @@ void staging_records_loop(TelemPostDaemon *daemon);
  */
 bool post_record_http(char *headers[], char *body);
 
+/**
+ * Pointer to function to isolate backend call during
+ * unit testing.
+ *
+ * @param headers pointer to array of keys
+ * @param body a pinter to payload
+ * */
+extern bool (*post_record_ptr)(char *headers[], char *body);
+
 /* spool window check */
 static inline bool inside_direct_spool_window(TelemPostDaemon *daemon, time_t current_time)
 {

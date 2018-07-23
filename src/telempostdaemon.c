@@ -211,7 +211,6 @@ bool post_record_http(char *headers[], char *body)
         } else if (http_response != 201 && http_response != 200) {
                 /*  201 means the record was  successfully created
                  *  200 is a generic "ok".
-                 *  TODO: Make list of white-listed response codes configurable?
                  */
                 telem_log(LOG_ERR, "Encountered error %ld on the server\n",
                           http_response);
@@ -351,7 +350,7 @@ static void save_entry_to_journal(TelemPostDaemon *daemon, time_t t_stamp, char 
 bool process_staged_record(char *filename, TelemPostDaemon *daemon)
 {
         int k;
-        bool ret = false;
+        bool ret = true;
         char *headers[NUM_HEADERS];
         char *body = NULL;
         int current_minute;
@@ -373,6 +372,10 @@ bool process_staged_record(char *filename, TelemPostDaemon *daemon)
         /* Load file */
         if ((ret = read_record(filename, headers, &body)) == false) {
                 telem_log(LOG_WARNING, "unable to read record\n");
+                /**
+                 * Not a failure condition, likely record is corrupted
+                 * Preferable to drop it than having a record stuck in
+                 * the staging directory */
                 goto end_processing_file;
         }
 
@@ -390,7 +393,6 @@ bool process_staged_record(char *filename, TelemPostDaemon *daemon)
                 telem_log(LOG_WARNING, "record server delivery disabled\n");
 #endif
                 // Not an error condition
-                ret = true;
                 goto end_processing_file;
         }
 
@@ -398,6 +400,7 @@ bool process_staged_record(char *filename, TelemPostDaemon *daemon)
         if (inside_direct_spool_window(daemon, time(NULL))) {
                 telem_log(LOG_INFO, "process_record: delivering directly to spool\n");
                 spool_record(daemon, headers, body);
+                // Not an error condition
                 goto end_processing_file;
         }
         if (daemon->record_window_length == -1 ||
@@ -430,13 +433,17 @@ bool process_staged_record(char *filename, TelemPostDaemon *daemon)
         /* Sends record if rate limiting is disabled, or all checks passed */
         if (!daemon->rate_limit_enabled || (record_check_passed && byte_check_passed)) {
                 /* Send the record as https post */
-                record_sent = post_record_http(headers, body);
+                record_sent = post_record_ptr(headers, body);
+                /* This is the only error condition in the whole function
+                 * if the record is not successfully posted to backend */
+                ret = record_sent;
         }
         // Get rate-limit strategy
         do_spool = spool_strategy_selected(daemon);
 
         // Drop record
         if (!record_sent && !do_spool) {
+                // Not an error condition
                 goto end_processing_file;
         }
         // Spool Record

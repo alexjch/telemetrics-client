@@ -26,6 +26,8 @@
 #include "configuration.h"
 #include "telempostdaemon.h"
 
+bool (*post_record_ptr)(char *[], char *) = post_record_http;
+
 void print_usage(char *prog)
 {
         printf("%s: Usage\n", prog);
