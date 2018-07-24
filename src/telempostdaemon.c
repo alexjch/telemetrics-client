@@ -113,10 +113,6 @@ void initialize_daemon(TelemPostDaemon *daemon)
         daemon->bypass_http_post_ts = 0;
         daemon->is_spool_valid = is_spool_valid();
         daemon->record_journal = open_journal(JOURNAL_PATH);
-        /* Register record retention delete action as a callback to prune entry */
-        if (daemon->record_journal != NULL && daemon->record_retention_enabled) {
-                daemon->record_journal->prune_entry_callback = &delete_record_by_id;
-        }
         daemon->fd = inotify_init();
         if (daemon->fd < 0) {
                 perror("Error initializing inotify");
@@ -128,6 +124,11 @@ void initialize_daemon(TelemPostDaemon *daemon)
 
         initialize_rate_limit(daemon);
         initialize_record_delivery(daemon);
+        /* Register record retention delete action as a callback to prune entry */
+        if (daemon->record_journal != NULL && daemon->record_retention_enabled) {
+                daemon->record_journal->prune_entry_callback = &delete_record_by_id;
+        }
+
         daemon->current_spool_size = 0;
 }
 
