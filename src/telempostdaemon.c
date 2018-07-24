@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <signal.h>
 #include <dirent.h>
+#include <malloc.h>
 #include <stdbool.h>
 #include <sys/stat.h>
 #include <curl/curl.h>
@@ -524,7 +525,9 @@ void run_daemon(TelemPostDaemon *daemon)
 {
         int ret;
         int spool_process_time = spool_process_time_config();
+        bool daemon_recycling_enabled = daemon_recycling_enabled_config();
         time_t last_spool_run_time = time(NULL);
+        time_t last_daemon_start_time = time(NULL);
 
         assert(daemon);
         assert(daemon->pollfds);
@@ -532,8 +535,8 @@ void run_daemon(TelemPostDaemon *daemon)
         assert(daemon->pollfds[watchfd].fd);
 
         while (1) {
-
-                ret = poll(daemon->pollfds, NFDS, spool_process_time);
+                malloc_trim(0);
+                ret = poll(daemon->pollfds, NFDS, spool_process_time * 1000);
                 if (ret == -1) {
                         telem_perror("Failed to poll daemon file descriptors");
                         break;
@@ -589,6 +592,15 @@ void run_daemon(TelemPostDaemon *daemon)
 
                                         i += (ssize_t)EVENT_SIZE + event->len;
                                 }
+                        }
+                } else {
+                        time_t now = time(NULL);
+                        /* time to recycle the daemon has elapsed*/
+                        if (daemon_recycling_enabled &&
+                            difftime(now, last_daemon_start_time) >= TM_DAEMON_EXIT_TIME) {
+                                /* Exit */
+                                telem_log(LOG_INFO, "Telemetry post daemon exiting for recycling\n");
+                                break;
                         }
                 }
 

@@ -317,7 +317,7 @@ int main(int argc, char **argv)
                         if (daemon_recycling_enabled &&
                             difftime(now, last_daemon_start_time) >= TM_DAEMON_EXIT_TIME) {
                                 /* Exit */
-                                telem_log(LOG_INFO, "Daemon exiting for recycling\n");
+                                telem_log(LOG_INFO, "Telemetry probe daemon exiting for recycling\n");
                                 goto clean_exit;
                         }
                 }
