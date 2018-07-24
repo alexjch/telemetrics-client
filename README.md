@@ -167,12 +167,14 @@ The client uses the following configuration options from the configuration file:
 * record_window_length: This is the time, in minutes (0-59), that establishes
   the window length for the record_burst_limit. EX: if record_burst_window=1000
   and record_window_length=15, then no more than 1000 records can be passed
-  within any given fifteen minute window.
+  within any given fifteen minute window. Notice that setting value to 0
+  will have the same result as disabling record_burst_limit.
 * byte_burst_limit: This is the maximum amount of bytes that can be passed by
   the daemon within the byte_window_length of time. If set to -1, the
   rate-limiting for byte bursts is disabled.
 * byte_window_length: This is the time, in minutes (0-59), that establishes the
-  window length for the byte_burst_limit.
+  window length for the byte_burst_limit. Notice that setting this value to 0
+  will have the same effect as disabling byte_burst_limit.
 * rate_limit_strategy: This is the strategy chosen once the rate-limiting
   threshold has been reached. Currently the options are 'drop' or 'spool', with
   spool being the default. If spool is chosen, records will be spooled and sent
