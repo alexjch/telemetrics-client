@@ -18,7 +18,8 @@ check_PROGRAMS = \
 	%D%/check_postd \
 	%D%/check_probes \
 	%D%/check_journal \
-	%D%/check_libtelemetry
+	%D%/check_libtelemetry \
+	%D%/check_privacy
 
 dist_check_SCRIPTS = \
 	%D%/create-core.sh
@@ -191,6 +192,7 @@ endif
 	@CHECK_CFLAGS@
 %C%_check_libtelemetry_LDADD = \
 	@CHECK_LIBS@ \
+	src/nica/nc-string.c \
 	$(top_builddir)/src/libtelemetry.la \
 	$(top_builddir)/src/libtelem-shared.la
 
@@ -200,6 +202,23 @@ if LOG_SYSTEMD
 %C%_check_libtelemetry_LDADD += $(SYSTEMD_JOURNAL_LIBS)
 endif
 endif
+
+%C%_check_privacy_SOURCES = \
+	src/util.c \
+	src/telemetry.c \
+	src/configuration.c \
+	src/probes/crash_probe.c \
+	src/nica/nc-string.c \
+	src/nica/hashmap.c \
+	src/nica/inifile.c
+
+%C%_check_privacy_CFLAGS = \
+	$(AM_CFLAGS) \
+	-lelf -ldw \
+	@CHECK_CFLAGS@
+
+%C%_check_privacy_LDADD = \
+	@CHECK_LIBS@
 
 @VALGRIND_CHECK_RULES@
 VALGRIND_SUPPRESSIONS_FILES = %D%/telemetrics-client.supp
