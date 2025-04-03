@@ -142,7 +142,7 @@ bool handle_client(TelemDaemon *daemon, nfds_t index, client *cl)
         /* Read the record size first */
         len = recv(cl->fd, &record_size, RECORD_SIZE_LEN, 0);
         if (len < 0) {
-                telem_log(LOG_ERR, "Failed to receive data from client"
+                telem_log(LOG_ERR, "Failed to receive record size from client"
                                   " %d: %s\n", cl->fd, strerror(errno));
                 goto end_client;
         } else if (len == 0) {
@@ -407,6 +407,12 @@ end:
                 free(headers[k]);
         return;
 }
+
+#ifdef FUZZING
+void fuzz_process_record(TelemDaemon *daemon, client *cl) {
+        process_record(daemon, cl);
+}
+#endif
 
 void add_pollfd(TelemDaemon *daemon, int fd, short events)
 {
